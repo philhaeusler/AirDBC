@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx">
+	
+	<fx:Script>
+		<![CDATA[
+			import airdbc.DBConnection;
+			
+			import mx.collections.ArrayList;
+			import mx.controls.Alert;
+			
+			import spark.components.gridClasses.GridColumn;
+			
+			[Bindable]
+			public var results : ArrayList;
+			
+			[Bindable]
+			public var columns : ArrayList;
+
+			protected var connection : DBConnection;
+			
+			protected function runQuery(event:MouseEvent):void
+			{
+				if (!this.connection) {
+					var dbFile : String = File.applicationDirectory.resolvePath("demo.mdb").nativePath;
+					
+					this.connection = new DBConnection();
+					if (!this.connection.open("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + dbFile)) {
+						this.connection = null;
+						Alert.show("Unable to open " + dbFile);
+						return;
+					}
+					
+				}
+				
+				var resultSet : Array = this.connection.query(query.text);
+				
+				if (resultSet == null) {
+					Alert.show("Invalid query");
+					return;
+				}
+				
+				var sourceColumns : Array = [];
+				
+				if (resultSet.length > 0) {
+					for (var key:String in resultSet[0]) {
+						var gc : GridColumn = new GridColumn(key);
+						gc.dataField = key;
+						gc.headerText = key;
+						
+						sourceColumns.push(gc);
+					}
+				}
+				
+				this.columns = new ArrayList(sourceColumns);	
+				this.results = new ArrayList(resultSet);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:HGroup left="4" right="4" top="4">
+		<s:TextInput id="query" text="SELECT * from Characters" width="100%" />
+		<s:Button label="Run" click="runQuery(event)"/>
+	</s:HGroup>
+	
+	<s:DataGrid left="8" top="40" right="8" bottom="8" columns="{columns}" dataProvider="{results}" />
+	
+</s:WindowedApplication>
